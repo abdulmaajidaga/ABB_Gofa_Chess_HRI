@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>RobotStudio Chess UI</title>
+    <!-- Local Chessboard.js CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='chessboard-1.0.0.min.css') }}">
+    
+    <style>
+        body {
+            background-color: #312e2b; /* Chess.com dark background */
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+        }
+        #board {
+            width: 500px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+        }
+        /* --- CHESS.COM COLORS --- */
+        .white-1e1d7 { background-color: #ebecd0; color: #739552; }
+        .black-3c85d { background-color: #739552; color: #ebecd0; }
+        
+        #status {
+            font-size: 24px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h2 id="status">Your turn (White)</h2>
+    <div id="board"></div>
+
+    <!-- Local Scripts (jQuery, Chessboard.js, Chess.js for rules) -->
+    <script src="{{ url_for('static', filename='jquery-3.5.1.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='chessboard-1.0.0.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='chess.js') }}"></script>
+
+    <script>
+        var board = null;
+        var game = new Chess();
+        var $status = $('#status');
+        
+        // NEW: A flag to pause background polling while you are using the UI
+        var isInteracting = false; 
+
+        function onDragStart (source, piece, position, orientation) {
+            // Do not pick up pieces if the game is over or if it's black's turn
+            if (game.game_over() || piece.search(/^b/) !== -1) {
+                return false;
+            }
+            isInteracting = true; // Pause polling when you click a piece
+        }
+
+        function onDrop (source, target) {
+            // Check if the move is legal in the frontend first
+            var move = game.move({
+                from: source,
+                to: target,
+                promotion: 'q' 
+            });
+
+            if (move === null) {
+                isInteracting = false; // Unpause if move was invalid
+                return 'snapback'; 
+            }
+
+            // 1. UI update: User moved
+            $status.css("color", "white"); 
+            $status.text("Robot is thinking & moving...");
+            
+            // 2. Send move to Python backend
+            $.ajax({
+                type: 'POST',
+                url: '/move',
+                contentType: 'application/json',
+                data: JSON.stringify({ move: source + target }),
+                success: function(response) {
+                    if (response.error) {
+                        game.undo();
+                        board.position(game.fen());
+                        alert("Backend rejected move!");
+                    } else {
+                        // Receive new board state after Stockfish plays
+                        game.load(response.fen);
+                        board.position(response.fen);
+                        
+                        // Turn text RED if in Check or Checkmate!
+                        if (response.status.includes("Check")) {
+                            $status.css("color", "#fa7373");
+                        } else {
+                            $status.css("color", "white");
+                        }
+                        
+                        $status.text(response.status);
+                    }
+                    isInteracting = false; // Unpause polling after backend resolves
+                },
+                error: function() {
+                    game.undo();
+                    board.position(game.fen());
+                    $status.text("Error connecting to Python server.");
+                    isInteracting = false; // Unpause polling on error
+                }
+            });
+        }
+
+        // Update the board position after the piece snap
+        function onSnapEnd () {
+            board.position(game.fen());
+        }
+
+        var config = {
+            draggable: true, // Keep the board draggable!
+            position: 'start',
+            onDragStart: onDragStart,
+            onDrop: onDrop,
+            onSnapEnd: onSnapEnd,
+            // Local path for offline piece images
+            pieceTheme: '/static/img/chesspieces/wikipedia/{piece}.png'
+        };
+        
+        // Initialize the chessboard
+        board = Chessboard('board', config);
+
+        // --- NEW HYBRID POLLING LOGIC ---
+        // Syncs the UI if a move was made on the physical board
+        setInterval(function() {
+            // Skip the poll if you are actively dragging a piece or waiting for API
+            if (isInteracting) return; 
+            
+            $.ajax({
+                url: '/state',
+                type: 'GET',
+                success: function(response) {
+                    // Only redraw the board if the FEN actually changed
+                    if (game.fen() !== response.fen) {
+                        game.load(response.fen);
+                        board.position(response.fen);
+                        
+                        if (response.status.includes("Check")) {
+                            $status.css("color", "#fa7373");
+                        } else {
+                            $status.css("color", "white");
+                        }
+                        $status.text(response.status);
+                    }
+                }
+            });
+        }, 1000);
+    </script>
+</body>
+</html>

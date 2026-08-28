@@ -183,11 +183,15 @@ rebuild the environment from scratch:
    board — the workflow is: make your move → press **Space** in the vision window → the app validates it,
    drives the robot, and the UI updates.
 
-   A human move followed by the robot's reply, played out on the real board:
+   | Human's turn | Robot's turn |
+   |---|---|
+   | ![Human playing — reading the board state from the browser and vision overlay before submitting a move](docs/images/human-playing.png) | ![Robot playing — the gripper lifting a piece mid-move](docs/images/robot-playing.png) |
 
-   <video src="https://github.com/abdulmaajidaga/ABB_Gofa_Chess_HRI/raw/main/docs/videos/real-robot-game.mp4" controls width="600"></video>
+   A full exchange — human move, then the robot's reply — on the real board:
 
-   (If the player doesn't render for you, [open the video file directly](https://github.com/abdulmaajidaga/ABB_Gofa_Chess_HRI/blob/main/docs/videos/real-robot-game.mp4).)
+   ![A human move followed by the robot's reply, played out on the real board](docs/images/real-robot-game.gif)
+
+   ([Full-quality video](https://github.com/abdulmaajidaga/ABB_Gofa_Chess_HRI/blob/main/docs/videos/real-robot-game.mp4) if you want audio/full resolution.)
 
    ⚠️ **Safety**: keep hands clear of the workspace while the arm is moving, and verify the taught graveyard
    and board-corner positions in a slow/manual jog before running full-speed automatic play.

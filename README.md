@@ -5,13 +5,6 @@ board, and an ABB GoFa cobot physically executes the engine's moves on a real ch
 **RobotStudio simulation** or on the **real robot**. A computer-vision script watches the physical board so
 you can also make your own moves by hand (no clicking required) and have the app pick them up automatically.
 
-> **📸 Add your media here** — this README has placeholder image/video tags throughout
-> (search for `<!-- SCREENSHOT -->` / `<!-- VIDEO -->`). Drop files into `docs/images/` and
-> `docs/videos/` using the filenames already referenced, and they'll render automatically on GitHub.
-
-<!-- SCREENSHOT: hero shot — real GoFa arm mid-move over the physical board -->
-![Robot playing chess](docs/images/hero.png)
-
 ## How it fits together
 
 ```mermaid
@@ -139,8 +132,7 @@ rebuild the environment from scratch:
    (RobotStudio's default simulated network address — this matches the default `host`/`port` in
    `ChessRobot`).
 
-   <!-- SCREENSHOT: RobotStudio station open, virtual controller running, socket server task visible -->
-   ![RobotStudio setup](docs/images/robotstudio-setup.png)
+   ![RobotStudio setup — GoFa arm over the chessboard in simulation](docs/images/robotstudio-setup.png)
 
 2. Start the Flask server:
    ```bash
@@ -153,13 +145,9 @@ rebuild the environment from scratch:
 3. Open **http://localhost:5050** in a browser and play — drag a piece to move as White. The server asks
    Stockfish for Black's reply and sends the corresponding pick/place commands to RobotStudio.
 
-   <!-- SCREENSHOT: browser chess UI mid-game -->
-   ![Game UI](docs/images/game-ui.png)
+   ![Game UI — checkmate reached in the browser](docs/images/game-ui.png)
 
 4. Watch RobotStudio's 3D view — the simulated GoFa should pick up and place the piece for Stockfish's move.
-
-   <!-- SCREENSHOT: RobotStudio 3D simulation view of the arm executing a move -->
-   ![RobotStudio simulation](docs/images/robotstudio-sim.png)
 
 5. *(Optional)* If you also want to feed in human moves by "moving" pieces on a physical calibration board
    instead of clicking, run `vision.py` alongside `app.py` (see the Vision section below) — otherwise just
@@ -195,15 +183,9 @@ rebuild the environment from scratch:
    board — the workflow is: make your move → press **Space** in the vision window → the app validates it,
    drives the robot, and the UI updates.
 
-   <!-- VIDEO: full human-vs-robot game on the real board, camera + arm both visible -->
-   > 🎥 Add a video at `docs/videos/real-robot-game.mp4` (or link a hosted video here) showing an end-to-end
-   > game against the real GoFa.
+   A human move followed by the robot's reply, played out on the real board:
 
-   <!-- SCREENSHOT: real robot mid-pick/place over the physical board -->
-   ![Real robot playing](docs/images/real-robot-playing.png)
-
-   <!-- SCREENSHOT: a human player's hand/turn at the physical board -->
-   ![Human turn at the board](docs/images/human-playing.png)
+   <video src="docs/videos/real-robot-game.mp4" controls width="600"></video>
 
    ⚠️ **Safety**: keep hands clear of the workspace while the arm is moving, and verify the taught graveyard
    and board-corner positions in a slow/manual jog before running full-speed automatic play.
@@ -224,8 +206,7 @@ camera feed:
 Also tune `OFFSET_TOP/BOTTOM/LEFT/RIGHT` at the top of the file to crop the raw camera frame down to just
 the board + a small margin.
 
-<!-- SCREENSHOT: Live Tuning window + AR overlay (green grid lines + red occupancy dots) on the physical board -->
-![Vision AR overlay](docs/images/vision-detection.png)
+![Vision AR overlay — green grid lines + red occupancy dots on the physical board](docs/images/vision-detection.png)
 
 **Controls while `vision.py` is running:**
 - **Space** — capture the current frame, diff it against the last known board state, and submit the

@@ -191,8 +191,6 @@ rebuild the environment from scratch:
 
    ![A human move followed by the robot's reply, played out on the real board](docs/images/real-robot-game.gif)
 
-   ([Full-quality video](https://github.com/abdulmaajidaga/ABB_Gofa_Chess_HRI/blob/main/docs/videos/real-robot-game.mp4) if you want audio/full resolution.)
-
    ⚠️ **Safety**: keep hands clear of the workspace while the arm is moving, and verify the taught graveyard
    and board-corner positions in a slow/manual jog before running full-speed automatic play.
 

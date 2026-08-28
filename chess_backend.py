@@ -4,7 +4,7 @@ import chess.engine
 
 class ChessRobot:
     """Handles all socket communication and physical math for RobotStudio."""
-    def __init__(self, host="192.168.125.1", port=5000, square_size_mm=42.1):
+    def __init__(self, host="127.0.0.1", port=5000, square_size_mm=42.1):
         self.square_size = square_size_mm
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:

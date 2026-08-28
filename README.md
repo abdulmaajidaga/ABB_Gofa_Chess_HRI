@@ -59,8 +59,8 @@ drive the robot → return the new state.
 ### The robot protocol
 
 `ChessRobot` (in [`chess_backend.py`](chess_backend.py)) talks to the ABB controller over a plain TCP socket
-(default `192.168.125.1:5000`, RobotStudio's standard virtual-controller address). Each command is a tiny
-text-encoded action:
+(default `127.0.0.1:5000`, matching `ChessMotion.mod`'s `SocketBind` for RobotStudio simulation, where
+RobotStudio and Python run on the same PC). Each command is a tiny text-encoded action:
 
 ```
 [1, 123.5, 45.2]   # action 1 = "pick up" at this X/Y (mm)
@@ -91,12 +91,13 @@ the controller:
   center of the board (`(21,21)`, `(315,315)`, `(168,168)`) — run this once after teaching `chess_workobj`
   to sanity-check your coordinate frame before playing a real game.
 
-> ⚠️ **Address mismatch to check before running:** `ChessMotion.mod` calls `SocketBind server_socket,
-> "127.0.0.1", 5000` (loopback), while `ChessRobot`'s Python-side default is `host="192.168.125.1"`. This
-> works in RobotStudio because the virtual controller's loopback is reachable at that address from the host
-> PC, but if you deploy to a **real** controller, `SocketBind` needs to bind an address Python can actually
-> reach over the network (e.g. `0.0.0.0` or the controller's LAN IP), and the `host=` in `chess_backend.py`
-> needs to match it — see [Running with the real robot](#running-with-the-real-robot) below.
+> ⚠️ **The address in `ChessMotion.mod`'s `SocketBind` and the `host=` default in `chess_backend.py` must
+> always match** — they're the two ends of the same socket. The repo defaults to `127.0.0.1` on both sides
+> for **RobotStudio simulation** (Python and the virtual controller on the same PC, so loopback works). If
+> you deploy to a **real** controller, change **both**: `SocketBind` needs to bind an address Python can
+> actually reach over the network (e.g. the controller's default service-port IP `192.168.125.1`, or `0.0.0.0`
+> to listen on all interfaces), and `host=` in `chess_backend.py` needs to point at that same address — see
+> [Running with the real robot](#running-with-the-real-robot) below.
 
 ## Setup
 
@@ -128,9 +129,8 @@ rebuild the environment from scratch:
 
 1. With the unpacked station's **virtual controller** running (see above), confirm `ChessMotion.mod` is the
    active module and `PROC main()` has been started — the Teach Pendant / RAPID output should show
-   `Waiting for Python on port 5000...`, meaning the socket server is up on `192.168.125.1:5000`
-   (RobotStudio's default simulated network address — this matches the default `host`/`port` in
-   `ChessRobot`).
+   `Waiting for Python on port 5000...`, meaning the socket server is up on `127.0.0.1:5000` (matching the
+   default `host`/`port` in `ChessRobot`, since Python and the virtual controller run on the same PC).
 
    ![RobotStudio setup — GoFa arm over the chessboard in simulation](docs/images/robotstudio-setup.png)
 
@@ -157,14 +157,14 @@ rebuild the environment from scratch:
 
 1. Load [`ChessMotion.mod`](ChessMotion.mod) onto the real IRC5/OmniCore controller (via RobotStudio's
    online/connect-to-controller mode, or by importing it directly on the Teach Pendant). Change the
-   `SocketBind` address in `PROC main()` from `"127.0.0.1"` to an address reachable over your real network
-   (e.g. `"0.0.0.0"` to listen on all interfaces, or the controller's own LAN IP) — the loopback address
-   only works when Python and the controller are the same machine, which is only true for the RobotStudio
-   virtual controller.
+   `SocketBind` address in `PROC main()` from `"127.0.0.1"` to an address reachable over your real network —
+   e.g. `192.168.125.1` (the controller's default service-port IP) if connecting directly, `"0.0.0.0"` to
+   listen on all interfaces, or the controller's LAN IP. The loopback address only works when Python and the
+   controller are the same machine, which is only true for the RobotStudio virtual controller.
 
-2. Point `ChessRobot` at that same real controller IP instead of the RobotStudio default — either edit the
+2. Point `ChessRobot` at that same real controller IP instead of the simulation default — either edit the
    `host` default in [`chess_backend.py`](chess_backend.py) or pass `host=` when constructing `GameManager`/
-   `ChessRobot`.
+   `ChessRobot`. It must match whatever you set `SocketBind` to in step 1.
 
 3. **Physically calibrate the board**: measure your real board's square size in mm and update
    `SQUARE_SIZE_MM` in [`app.py`](app.py), and make sure the robot's taught origin/frame matches what
@@ -185,7 +185,9 @@ rebuild the environment from scratch:
 
    A human move followed by the robot's reply, played out on the real board:
 
-   <video src="docs/videos/real-robot-game.mp4" controls width="600"></video>
+   <video src="https://github.com/abdulmaajidaga/ABB_Gofa_Chess_HRI/raw/main/docs/videos/real-robot-game.mp4" controls width="600"></video>
+
+   (If the player doesn't render for you, [open the video file directly](https://github.com/abdulmaajidaga/ABB_Gofa_Chess_HRI/blob/main/docs/videos/real-robot-game.mp4).)
 
    ⚠️ **Safety**: keep hands clear of the workspace while the arm is moving, and verify the taught graveyard
    and board-corner positions in a slow/manual jog before running full-speed automatic play.
